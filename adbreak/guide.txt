@@ -1,0 +1,39 @@
+  _  ___           _ _      __  __           _     _ _             
+ | |/ (_)_ __   __| | | ___|  \/  | ___   __| | __| (_)_ __   __ _ 
+ | ' /| | '_ \ / _` | |/ _ \ |\/| |/ _ \ / _` |/ _` | | '_ \ / _` |
+ | . \| | | | | (_| | |  __/ |  | | (_) | (_| | (_| | | | | | (_| |
+ |_|\_\_|_| |_|\__,_|_|\___|_|  |_|\___/ \__,_|\__,_|_|_| |_|\__, |
+                                                             |___/ 
+--------------------------------------------------------------------
+
+Requirements:
+  - Ad-supported Kindle (can't be blacklisted)
+  - Firmware version from 5.18.1 to 5.18.5
+  - Computer + cable (lol)
+
+1. Check the Amazon firmware updates page for your device. If a version newer than 5.18.5 is out, this has likely been patched.
+   You may also just want to avoid updating in case this doesn't work for some reason. See the following guide on how to prevent automatically updating:
+     https://kindlemodding.org/jailbreaking/prevent-auto-update.html
+
+2. If not done already, connect to the Internet and log into an Amazon account on the Kindle to register it.
+
+3. Leave it connected to the Internet for a while so it can download advertisements. If you press the lock button, an advertisement should be displayed. 
+   If advertisements aren't being downloaded after a while, a factory reset may help.
+
+4. Once you've verified ads are being displayed on the lockscreen, swipe down and turn on Airplane mode.
+
+5. Click on the top right menu and select "View all ads", which should display multiple "special offers".
+
+6. Plug in the Kindle, open the system folder and and copy ".assets" to your desktop.
+
+7. Download and extract "adbreak.zip", copy the contents to the ".assets" folder on your desktop.
+
+8. Replace the contents of all "details.html" files with the contents of "adbreak.html":
+  Windows: Double click on "replace.bat"
+  Linux/Mac CLI: find . -name 'details.html' -exec cp adbreak.html {} \;
+
+9. Delete the original .assets folder on the Kindle and replace it with our modified copy.
+
+10. Click on an ad and go through the popups, once you click OK on "Bang!", the jailbreak should run.
+
+11. Congrats, install the hotfix and enjoy your liberated device - https://kindlemodding.org/jailbreaking/post-jailbreak/setting-up-a-hotfix/

