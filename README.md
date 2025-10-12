@@ -1,5 +1,5 @@
 # AdBreak
-Experimental JB for ad-supported devices (5.18.1-5.18.5) (no Colorsoft &amp; support, Scribe possible if you set your country to France)
+Experimental JB for ad-supported devices (5.18.1-5.18.5) (no Colorsoft support, Scribe possible if you set your country to France)
 ### Installation
 Please read jailbreak instructions on the kindle modding wiki: https://kindlemodding.org/jailbreaking/AdBreak/
 Or use the guide.txt included 
