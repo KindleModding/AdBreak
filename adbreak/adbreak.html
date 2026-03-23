@@ -196,6 +196,10 @@ var ver = String(kindle.device.getSoftwareVersionNumber()).slice(0,6);
 alert("Version number is: " + ver);
 
 var entry = offsets[ver];
+if (!entry) {
+  alert("This build is not in AdBreak's offset table: " + ver + "\nCheck firmware is 5.18.1-5.18.5 and that AdBreak supports your device.");
+  throw new Error("unsupported build");
+}
 var memcpy_got = entry.memcpy_got;
 var xml_got = entry.xml_got;
 var memcpy_offset = entry.memcpy_offset;

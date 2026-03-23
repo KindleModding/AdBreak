@@ -29,7 +29,7 @@ Requirements:
 7. Download and extract "adbreak.zip", copy the contents to the ".assets" folder on your desktop.
 
 8. Replace the contents of all "details.html" files with the contents of "adbreak.html":
-  Windows: Double click on "replace.bat"
+  Windows: Double click on "replace.bat" (it searches from its own folder; you should see a list of each Replaced: path, or a message if none were found)
   Linux/Mac CLI: find . -name 'details.html' -exec cp adbreak.html {} \;
 
 9. Delete the original .assets folder on the Kindle and replace it with our modified copy.
