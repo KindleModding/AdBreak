@@ -9,4 +9,4 @@ fi
 
 set-dynconf-value winmgr.vibrancyMode.pref.path ""
 
-curl -L https://kindlemodding.org/jb.sh | JB_HEADER="AdBreak Jailbreak" sh
+curl -L https://kindlemodding.org/jb.sh | RUN_MODE=1 JB_HEADER="AdBreak Jailbreak" sh
